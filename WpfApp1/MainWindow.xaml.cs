@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Configuration;
+using System.IO;
 using System.Linq;
 using System.Media;
 using System.Text;
@@ -14,6 +17,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Xml.Serialization;
 
 namespace WpfApp1
 {
@@ -24,51 +28,66 @@ namespace WpfApp1
     {
         Timer timer;
         SoundPlayer player = new SoundPlayer();
+        public ObservableCollection<DateTime> alarmClock = new ObservableCollection<DateTime>();
         public MainWindow()
         {
             InitializeComponent();
             timer = new Timer();
             timer.Interval = 1000;
             timer.Elapsed += TimerElapsed;
-
+            
         }
 
-        delegate void UpdateLable(Label lbl, string value);
-        void UpdateDataLable(Label lbl, string value)
+        delegate void UpdateLable(Label statusLbl, string value);
+        void UpdateDataLable(Label statusLbl, string value)
         {
-            lbl.Content = value;
+            statusLbl.Content = value;
         }
 
         private void TimerElapsed(object sender, ElapsedEventArgs e)
         {
-            this.Dispatcher.Invoke(() =>
+            foreach(var c in alarmClock)
             {
-                DateTime currentTime = DateTime.Now;
-                DateTime userTime = (DateTime)dateTimePicker.Value;
-
-                if (currentTime.Hour == userTime.Hour && currentTime.Minute == userTime.Minute && currentTime.Second == userTime.Second)
+                this.Dispatcher.Invoke(() =>
                 {
-                    timer.Stop();
-                    try
+                    DateTime currentTime = DateTime.Now;
+                    DateTime userTime = c;
+                    //alarmClock.Add(userTime);
+                    //AlarmsList.ItemsSource = alarmClock;
+
+                    if (currentTime.Hour == userTime.Hour && currentTime.Minute == userTime.Minute && currentTime.Second == userTime.Second)
                     {
-                        UpdateLable upd = UpdateDataLable;
-                        
-                        player.SoundLocation = @"E:\Різне\samsung_galaxy_morning_flower-namobilu.com.wav";
-                        player.PlayLooping();
+                        timer.Stop();
+                        try
+                        {
+                            UpdateLable upd = UpdateDataLable;
+
+                            player.SoundLocation = ConfigurationManager.AppSettings["Path"];
+                            player.PlayLooping();
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show(ex.Message, "Message", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show(ex.Message, "Message", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                }
-            });
-            
+                });
+            }            
         }
 
         private void btnStart_Click(object sender, RoutedEventArgs e)
         {
+            DateTime userTime = (DateTime)dateTimePicker.Value;
             timer.Start();
             lblStatus.Content = "Running...";
+            alarmClock.Add(userTime);
+
+            XmlSerializer xs = new XmlSerializer(typeof(ObservableCollection<DateTime>));
+
+            TextWriter txtWriter = new StreamWriter(ConfigurationManager.AppSettings["XmlPath"]);
+
+            xs.Serialize(txtWriter, alarmClock);
+
+            txtWriter.Close();
         }
 
         private void btnStop_Click(object sender, RoutedEventArgs e)
@@ -76,6 +95,27 @@ namespace WpfApp1
             timer.Stop();
             lblStatus.Content = "Stop";
             player.Stop();
+            timer.Start();
+        }
+
+        private void btnPostponed_Click(object sender, RoutedEventArgs e)
+        {
+            DateTime userTime = DateTime.Now.AddMinutes(1);
+            lblStatus.Content = "Stop";
+            player.Stop();
+            timer.Start();
+            lblStatus.Content = "Running...";
+            alarmClock.Add(userTime);
+        }
+
+        private void AlarmClock_Loaded(object sender, RoutedEventArgs e)
+        {
+            string xmlString = ConfigurationManager.AppSettings["XmlPath"];
+            XmlSerializer serializer = new XmlSerializer(typeof(ObservableCollection<DateTime>));
+            StreamReader reader = new StreamReader(xmlString);
+            alarmClock = (ObservableCollection<DateTime>)serializer.Deserialize(reader);
+            reader.Close();
+            List.ItemsSource = alarmClock;
         }
     }
 }
