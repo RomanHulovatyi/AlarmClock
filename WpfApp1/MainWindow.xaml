@@ -5,14 +5,16 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp1" xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
-        Title="Alarm Clock" Height="346" Width="382" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" Loaded="AlarmClock_Loaded">
-    <Grid Margin="0,0,10,-6" >
+        Title="Alarm Clock" Height="454" Width="382" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" Loaded="AlarmClock_Loaded">
+    <Grid Margin="0,0,10,7" >
         <xctk:DateTimePicker x:Name="dateTimePicker" HorizontalAlignment="Center" Margin="0,27,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.506,0.528"/>
         <Button x:Name="btnStart" Content="Start" Margin="60,116,258,0" VerticalAlignment="Top" Height="34" Click="btnStart_Click"/>
         <Button x:Name="btnStop" Content="Stop" Margin="258,116,60,0" VerticalAlignment="Top" RenderTransformOrigin="0.568,0.658" Height="34" Click="btnStop_Click"/>
         <Label x:Name="lblStatus" Content="Status" HorizontalAlignment="Center" Margin="0,76,0,0" VerticalAlignment="Top"/>
         <Button x:Name="btnPostponed" Content="Postponed" Margin="143,116,143,0" VerticalAlignment="Top" Height="34" Click="btnPostponed_Click"/>
-        <DataGrid x:Name="List" Margin="10,180,0,10" ></DataGrid>
+        <DataGrid x:Name="List" Margin="10,180,0,77" ></DataGrid>
+        <Button x:Name="btnDelete" Content="Delete" Margin="143,359,143,0" VerticalAlignment="Top" Height="34" Click="btnDelete_Click"/>
+
     </Grid>
 
 </Window>

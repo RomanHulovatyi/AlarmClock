@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AlarmClock;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Configuration;
@@ -28,7 +29,7 @@ namespace WpfApp1
     {
         Timer timer;
         SoundPlayer player = new SoundPlayer();
-        public ObservableCollection<DateTime> alarmClock = new ObservableCollection<DateTime>();
+        public ObservableCollection<Alarm> alarmClock = new ObservableCollection<Alarm>();
         public MainWindow()
         {
             InitializeComponent();
@@ -51,13 +52,13 @@ namespace WpfApp1
                 this.Dispatcher.Invoke(() =>
                 {
                     DateTime currentTime = DateTime.Now;
-                    DateTime userTime = c;
-                    //alarmClock.Add(userTime);
-                    //AlarmsList.ItemsSource = alarmClock;
+                    DateTime userTime = c.DateAndTime;
 
                     if (currentTime.Hour == userTime.Hour && currentTime.Minute == userTime.Minute && currentTime.Second == userTime.Second)
                     {
                         timer.Stop();
+                        c.Status = "Completed";
+                        List.Items.Refresh();
                         try
                         {
                             UpdateLable upd = UpdateDataLable;
@@ -76,12 +77,16 @@ namespace WpfApp1
 
         private void btnStart_Click(object sender, RoutedEventArgs e)
         {
-            DateTime userTime = (DateTime)dateTimePicker.Value;
+            Alarm userAlarm = new Alarm
+            {
+                DateAndTime = (DateTime)dateTimePicker.Value
+            };
+            //DateTime userTime = (DateTime)dateTimePicker.Value;
             timer.Start();
             lblStatus.Content = "Running...";
-            alarmClock.Add(userTime);
+            alarmClock.Add(userAlarm);
 
-            XmlSerializer xs = new XmlSerializer(typeof(ObservableCollection<DateTime>));
+            XmlSerializer xs = new XmlSerializer(typeof(ObservableCollection<Alarm>));
 
             TextWriter txtWriter = new StreamWriter(ConfigurationManager.AppSettings["XmlPath"]);
 
@@ -100,22 +105,51 @@ namespace WpfApp1
 
         private void btnPostponed_Click(object sender, RoutedEventArgs e)
         {
-            DateTime userTime = DateTime.Now.AddMinutes(1);
+            Alarm userAlarm = new Alarm();
+            userAlarm.DateAndTime = DateTime.Now.AddMinutes(1);
             lblStatus.Content = "Stop";
             player.Stop();
             timer.Start();
             lblStatus.Content = "Running...";
-            alarmClock.Add(userTime);
+            alarmClock.Add(userAlarm);
         }
 
         private void AlarmClock_Loaded(object sender, RoutedEventArgs e)
         {
             string xmlString = ConfigurationManager.AppSettings["XmlPath"];
-            XmlSerializer serializer = new XmlSerializer(typeof(ObservableCollection<DateTime>));
-            StreamReader reader = new StreamReader(xmlString);
-            alarmClock = (ObservableCollection<DateTime>)serializer.Deserialize(reader);
-            reader.Close();
+            if (!String.IsNullOrEmpty(xmlString))
+            {
+                XmlSerializer serializer = new XmlSerializer(typeof(ObservableCollection<Alarm>));
+                StreamReader reader = new StreamReader(xmlString);
+                alarmClock = (ObservableCollection<Alarm>)serializer.Deserialize(reader);
+                reader.Close();
+            }
+
             List.ItemsSource = alarmClock;
+        }
+
+        private void btnDelete_Click(object sender, RoutedEventArgs e)
+        {
+            if (List.SelectedItems.Count > 0)
+            {
+                for (int i = 0; i < List.SelectedItems.Count; i++)
+                {
+                    Alarm clocks = (Alarm)List.SelectedItems[i];
+
+                    if (clocks != null)
+                    {
+                        alarmClock.Remove(clocks);
+
+                        XmlSerializer xs = new XmlSerializer(typeof(ObservableCollection<Alarm>));
+
+                        TextWriter txtWriter = new StreamWriter(ConfigurationManager.AppSettings["XmlPath"]);
+
+                        xs.Serialize(txtWriter, alarmClock);
+
+                        txtWriter.Close();
+                    }
+                }
+            }
         }
     }
 }
